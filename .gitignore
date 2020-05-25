@@ -1,5 +1,7 @@
 .env
 # Logs
+.DS_STORE
+.idea
 logs
 *.log
 npm-debug.log*
