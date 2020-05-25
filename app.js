@@ -4,8 +4,19 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-//const encrypt = require("mongoose-encryption"); //Replaced with md5
-const md5 = require("md5");
+
+//LEVEL 3 SECURITY
+// const encrypt = require("mongoose-encryption"); //Replaced with md5
+//const md5 = require("md5");
+
+//LEVEL 4 SECURITY
+// BCRYPT
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+/**
+ * function we use
+ * bcrypt.hash(myPlainTextPassword,saltRounds,callback(err,hash){})
+ */
 const app = express();
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -52,9 +63,11 @@ app
         console.log(err);
       } else {
         if (foundUser) {
-          if (foundUser.password === password) {
-            res.render("secrets");
-          }
+          bcrypt.compare(password, foundUser.password, (err, hashResult) => {
+            if (hashResult === true) {
+              res.render("secrets");
+            }
+          });
         }
       }
     });
@@ -66,16 +79,18 @@ app
   })
 
   .post((req, res) => {
-    const newUser = new User({
-      email: req.body.username,
-      password: md5(req.body.password),
-    });
-    newUser.save((err) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.render("secrets");
-      }
+    bcrypt.hash(req.body.password, saltRounds, (err, Hash) => {
+      const newUser = new User({
+        email: req.body.username,
+        password: Hash,
+      });
+      newUser.save((err) => {
+        if (err) {
+          console.log(err);
+        } else {
+          res.render("secrets");
+        }
+      });
     });
   });
 
